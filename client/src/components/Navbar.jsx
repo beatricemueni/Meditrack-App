@@ -1,5 +1,17 @@
-import { Link, useNavigate } from "react-router-dom";
+
+import { NavLink, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
+import { 
+  Activity, 
+  Pill, 
+  Bell, 
+  FileText, 
+  User, 
+  ShieldCheck, 
+  LogOut,
+  LogIn,
+  UserPlus
+} from "lucide-react";
 
 function Navbar() {
   const { user, logout } = useAuth();
@@ -10,27 +22,101 @@ function Navbar() {
     navigate("/login");
   }
 
+  
+  const isAdmin = user?.role === "admin";
+
   return (
-    <nav>
-      <h2>MediTrack</h2>
+    <aside className="left-navbar">
+      <div className="navbar-logo">
+        <Activity size={28} strokeWidth={2.5} />
+      </div>
 
-      {!user ? (
-        <>
-          <Link to="/login">Login</Link>{" | "}
-          <Link to="/register">Register</Link>
-        </>
+      {/* Navigation Links */}
+      <nav className="navbar-links-stack">
+        {!user ? (
+          
+          <>
+            <NavLink 
+              to="/login" 
+              className={({ isActive }) => isActive ? "nav-icon-btn active" : "nav-icon-btn"}
+              title="Login"
+            >
+              <LogIn size={22} />
+            </NavLink>
+            <NavLink 
+              to="/register" 
+              className={({ isActive }) => isActive ? "nav-icon-btn active" : "nav-icon-btn"}
+              title="Register"
+            >
+              <UserPlus size={22} />
+            </NavLink>
+          </>
+        ) : (
+          
+          <>
+            <NavLink 
+              to="/dashboard" 
+              className={({ isActive }) => isActive ? "nav-icon-btn active" : "nav-icon-btn"}
+              title="Dashboard"
+            >
+              <Activity size={22} />
+            </NavLink>
+
+            <NavLink 
+              to="/medications" 
+              className={({ isActive }) => isActive ? "nav-icon-btn active" : "nav-icon-btn"}
+              title="Medications"
+            >
+              <Pill size={22} />
+            </NavLink>
+
+            <NavLink 
+              to="/reminders" 
+              className={({ isActive }) => isActive ? "nav-icon-btn active" : "nav-icon-btn"}
+              title="Reminders"
+            >
+              <Bell size={22} />
+            </NavLink>
+
+            <NavLink 
+              to="/prescriptions" 
+              className={({ isActive }) => isActive ? "nav-icon-btn active" : "nav-icon-btn"}
+              title="Prescriptions"
+            >
+              <FileText size={22} />
+            </NavLink>
+
+            <NavLink 
+              to="/profile" 
+              className={({ isActive }) => isActive ? "nav-icon-btn active" : "nav-icon-btn"}
+              title="Profile"
+            >
+              <User size={22} />
+            </NavLink>
+
+          
+            {isAdmin && (
+              <NavLink 
+                to="/admin-controls" 
+                className={({ isActive }) => isActive ? "nav-icon-btn admin active" : "nav-icon-btn admin"}
+                title="Admin Controls"
+              >
+                <ShieldCheck size={22} />
+              </NavLink>
+            )}
+          </>
+        )}
+      </nav>
+
+      
+      {user ? (
+        <button onClick={handleLogout} className="navbar-logout-btn" title="Logout">
+          <LogOut size={22} />
+        </button>
       ) : (
-        <>
-          <Link to="/dashboard">Dashboard</Link>{" | "}
-          <Link to="/medications">Medications</Link>{" | "}
-          <Link to="/reminders">Reminders</Link>{" | "}
-          <Link to="/prescriptions">Prescriptions</Link>{" | "}
-          <Link to="/profile">Profile</Link>{" | "}
-
-          <button onClick={handleLogout}>Logout</button>
-        </>
+        <div style={{ height: "52px" }}></div>
       )}
-    </nav>
+    </aside>
   );
 }
 

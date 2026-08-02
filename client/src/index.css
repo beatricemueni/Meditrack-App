@@ -1,111 +1,276 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+/* ==========================================
+   1. CORE DESIGN TOKENS & SITE REBOOT
+   ========================================== */
+@import url('https://googleapis.com');
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box !important;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+:root {
+  --primary: #0f766e;
+  --primary-hover: #115e59;
+  --primary-light: #ccfbf1;
+  --primary-glow: rgba(15, 118, 110, 0.15);
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+  --success: #22c55e;
+  --warning: #f97316;
+  --danger: #ef4444;
+
+  --background: #f4fbf9;
+  --white: #ffffff;
+  --text: #134e4a;
+  --muted: #64748b;
+  --border: #e2f5f1;
+
+  --sidebar-width: 96px;
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  
+  --shadow-sm: 0 2px 8px rgba(15, 118, 110, 0.04);
+  --shadow-md: 0 10px 30px rgba(15, 118, 110, 0.08);
+  --shadow-lg: 0 20px 40px rgba(15, 118, 110, 0.12);
 }
 
 body {
-  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--background) !important;
+  color: var(--text) !important;
+  min-height: 100vh;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+/* ==========================================
+   2. PRIMARY SYSTEM SHELL GRID (FORCES SIDEBAR SIDE-BY-SIDE)
+   ========================================== */
+.app-container {
+  min-height: 100vh !important;
+  display: flex !important; /* This forces the left nav and dashboard content side-by-side */
+  width: 100% !important;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+.dashboard-layout .main-content-wrapper {
+  flex: 1 !important;
+  margin-left: var(--sidebar-width) !important; /* Offsets content from behind fixed navbar */
+  padding: 48px !important;
+  width: calc(100% - var(--sidebar-width)) !important;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+.auth-layout .main-content-wrapper {
+  flex: 1 !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+.main-content {
+  width: 100% !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+/* ==========================================
+   3. FAR-LEFT FIXED SIDEBAR LAYOUT
+   ========================================== */
+.left-navbar {
+  width: var(--sidebar-width) !important;
+  height: 100vh !important;
+  background-color: var(--white) !important;
+  border-right: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-md) !important;
+  display: flex !important;
+  flex-direction: column !important; /* Stacks links vertically */
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 36px 0 !important;
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  z-index: 1000 !important;
+}
+
+.navbar-logo {
+  color: var(--primary) !important;
+  background: var(--primary-light) !important;
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: var(--radius-md) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.navbar-links-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  width: 100% !important;
+  align-items: center !important;
+}
+
+.nav-icon-btn {
+  color: var(--muted) !important;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: var(--radius-md) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+}
+
+.nav-icon-btn:hover {
+  color: var(--primary) !important;
+  background-color: var(--primary-light) !important;
+}
+
+.nav-icon-btn.active {
+  color: var(--white) !important;
+  background-color: var(--primary) !important;
+  box-shadow: 0 8px 20px var(--primary-glow) !important;
+}
+
+.navbar-logout-btn {
+  color: var(--muted) !important;
+  background: transparent !important;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: var(--radius-md) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+}
+
+.navbar-logout-btn:hover {
+  color: var(--danger) !important;
+  background-color: #fee2e2 !important;
+}
+
+/* ==========================================
+   4. RICH GRADIENT HEADER & COMPONENT CARDS
+   ========================================== */
+.dashboard-header {
+  background: linear-gradient(135deg, #115e59 0%, #042f2e 100%) !important;
+  padding: 40px !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-md) !important;
+  margin-bottom: 40px !important;
+  color: var(--white) !important;
+}
+
+.dashboard-header h1 {
+  font-size: 32px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  margin-bottom: 8px !important;
+}
+
+.dashboard-header p {
+  color: #a7f3d0 !important;
+  font-size: 16px !important;
+}
+
+.dashboard-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 24px !important;
+  margin-bottom: 30px !important;
+}
+
+.dashboard-card {
+  background-color: var(--white) !important;
+  padding: 32px !important;
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-sm) !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.dashboard-icon {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: var(--radius-md) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 24px !important;
+}
+
+.dashboard-card h3 {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  margin-bottom: 10px !important;
+  color: var(--text) !important;
+}
+
+.dashboard-card p {
+  color: var(--muted) !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  margin-bottom: 24px !important;
+}
+
+.btn-primary {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: var(--primary) !important;
+  color: var(--white) !important;
+  padding: 12px 24px !important;
+  border-radius: var(--radius-md) !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+  width: fit-content !important;
+  text-decoration: none !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover) !important;
+}
+
+/* Metric Display Panels */
+.summary-card {
+  background-color: var(--white) !important;
+  padding: 32px !important;
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-sm) !important;
+  color: var(--text) !important;
+}
+
+.summary-card h2 {
+  font-size: 22px !important;
+  margin-bottom: 24px !important;
+}
+
+.summary-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  gap: 20px !important;
+}
+
+.summary-grid div {
+  padding: 24px !important;
+  border-radius: var(--radius-md) !important;
+  background-color: var(--background) !important;
+  border: 1px solid var(--border) !important;
+  text-align: center !important;
+}
+
+.summary-grid strong {
+  display: block !important;
+  font-size: 36px !important;
+  color: var(--primary) !important;
+  margin-bottom: 4px !important;
+}
+
+.summary-grid span {
+  color: var(--muted) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
 }
