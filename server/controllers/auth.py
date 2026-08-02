@@ -16,40 +16,20 @@ class Register(Resource):
         email = data.get("email")
         password = data.get("password")
 
-
         if not username or not email or not password:
-            return {
-                "message": "All fields are required"
-            }, 400
+            return {"message": "All fields are required"}, 400
 
-
-        existing_user = User.query.filter_by(
-            email=email
-        ).first()
-
+        existing_user = User.query.filter_by(email=email).first()
 
         if existing_user:
-            return {
-                "message": "Email already exists"
-            }, 400
+            return {"message": "Email already exists"}, 400
 
-
-        # Find normal user role
-        user_role = Role.query.filter_by(
-            name="user"
-        ).first()
-
+        user_role = Role.query.filter_by(name="user").first()
 
         if not user_role:
-            return {
-                "message": "Default role not found"
-            }, 500
+            return {"message": "Default role not found"}, 500
 
-
-        hashed_password = bcrypt.generate_password_hash(
-            password
-        ).decode("utf-8")
-
+        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
 
         user = User(
             username=username,
@@ -58,15 +38,12 @@ class Register(Resource):
             role_id=user_role.id
         )
 
-
         db.session.add(user)
         db.session.commit()
-
 
         return {
             "message": "User registered successfully"
         }, 201
-
 
 
 class Login(Resource):
@@ -75,42 +52,28 @@ class Login(Resource):
 
         data = request.get_json()
 
-
         email = data.get("email")
         password = data.get("password")
 
-
-        user = User.query.filter_by(
-            email=email
-        ).first()
-
+        user = User.query.filter_by(email=email).first()
 
         if not user:
-            return {
-                "message": "Invalid email or password"
-            }, 401
+            return {"message": "Invalid email or password"}, 401
 
-
-
-        if not bcrypt.check_password_hash(
-            user.password_hash,
-            password
-        ):
-            return {
-                "message": "Invalid email or password"
-            }, 401
-
-
+        if not bcrypt.check_password_hash(user.password_hash, password):
+            return {"message": "Invalid email or password"}, 401
 
         token = create_access_token(
             identity=str(user.id),
-            additional_claims={
-                "role": user.role.name
-            }
+            additional_claims={"role": user.role.name}
         )
 
-
         return {
-            "token": token,
-            "role": user.role.name
+            "access_token": token,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "role": user.role.name
+            }
         }, 200
