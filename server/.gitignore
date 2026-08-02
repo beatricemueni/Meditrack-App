@@ -1,0 +1,22 @@
+# Virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# VS Code settings
+.vscode/
+
+# SQLite database
+instance/*.db
+
+# Migration cache
+*.log
+
+# OS files
+.DS_Store
