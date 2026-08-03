@@ -11,7 +11,7 @@ class MedicationList(Resource):
     @jwt_required()
     def get(self):
         page = request.args.get("page", 1, type=int)
-        per_page = request.args.get("per_page", 5, type=int)
+        per_page = request.args.get("per_page", 20, type=int)  # Increased slightly to fetch more records
 
         medications = Medication.query.paginate(
             page=page,
@@ -20,7 +20,16 @@ class MedicationList(Resource):
         )
 
         return {
-            "data": [medication.to_dict() for medication in medications.items],
+            # 💡 FIX: Manually serialize each object instance using standard key-value assignments
+            "data": [
+                {
+                    "id": med.id,
+                    "name": med.name,
+                    "dosage": med.dosage,
+                    "frequency": med.frequency,
+                    "user_id": med.user_id
+                } for med in medications.items
+            ],
             "page": medications.page,
             "per_page": medications.per_page,
             "total": medications.total,
@@ -44,7 +53,13 @@ class MedicationList(Resource):
         db.session.add(medication)
         db.session.commit()
 
-        return medication.to_dict(), 201
+        return {
+            "id": medication.id,
+            "name": medication.name,
+            "dosage": medication.dosage,
+            "frequency": medication.frequency,
+            "user_id": medication.user_id
+        }, 201
 
 
 class MedicationResource(Resource):
@@ -52,7 +67,13 @@ class MedicationResource(Resource):
     @jwt_required()
     def get(self, id):
         medication = Medication.query.get_or_404(id)
-        return medication.to_dict(), 200
+        return {
+            "id": medication.id,
+            "name": medication.name,
+            "dosage": medication.dosage,
+            "frequency": medication.frequency,
+            "user_id": medication.user_id
+        }, 200
 
     @jwt_required()
     def patch(self, id):
@@ -66,7 +87,13 @@ class MedicationResource(Resource):
 
         db.session.commit()
 
-        return medication.to_dict(), 200
+        return {
+            "id": medication.id,
+            "name": medication.name,
+            "dosage": medication.dosage,
+            "frequency": medication.frequency,
+            "user_id": medication.user_id
+        }, 200
 
     @jwt_required()
     def delete(self, id):
