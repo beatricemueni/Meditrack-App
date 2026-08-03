@@ -1,5 +1,4 @@
 from flask import Flask
-
 from config import Config
 from extensions import (db, migrate, bcrypt, jwt, cors, ma, api)
 
@@ -37,7 +36,7 @@ def create_app():
     # 1. Initialize the Flask-RESTful API engine endpoints first
     api.init_app(app)
 
-    # 2. 🎯 FIX: Apply CORS explicitly AFTER the routes are fully initialized.
+    # 2.  FIX: Apply CORS explicitly AFTER the routes are fully initialized.
     # This prevents Flask-RESTful from blocking the browser's preflight OPTIONS checks.
     cors.init_app(app, resources={
         r"/*": {
