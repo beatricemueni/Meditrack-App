@@ -1,96 +1,175 @@
 import React, { useState, useEffect } from 'react';
 
 function Prescriptions() {
-  // 1. Initialize component state to hold data variables
   const [prescriptionsList, setPrescriptionsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 2. Fetch prescriptions from your Flask backend on mount
+  // Form creation input states
+  const [doctorName, setDoctorName] = useState('');
+  const [instructions, setInstructions] = useState('');
+  const [formMessage, setFormMessage] = useState('');
+
+  // Inline edit monitor variables
+  const [editingId, setEditingId] = useState(null);
+  const [editDoctor, setEditDoctor] = useState('');
+  const [editInstructions, setEditInstructions] = useState('');
+
+  // Fetch items
   useEffect(() => {
     fetch('http://localhost:5000/prescriptions', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}` // Adds the required security token
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
     })
       .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Server responded with status: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Status: ${res.status}`);
         return res.json();
       })
       .then((data) => {
-        // Handle both direct arrays or paginated data objects from Flask-RESTful
-        if (Array.isArray(data)) {
-          setPrescriptionsList(data);
-        } else if (data && Array.isArray(data.prescriptions)) {
-          setPrescriptionsList(data.prescriptions);
-        } else {
-          setPrescriptionsList([]);
-        }
+        if (data && Array.isArray(data.prescriptions)) setPrescriptionsList(data.prescriptions);
+        else if (Array.isArray(data)) setPrescriptionsList(data);
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching prescriptions:", err);
         setError(err.message);
         setLoading(false);
       });
   }, []);
 
+  // 1. CREATE (POST)
+  const handleAddPrescription = (e) => {
+    e.preventDefault();
+    if (!doctorName || !instructions) {
+      setFormMessage('Please input both the doctor name and instructions.');
+      return;
+    }
+
+    fetch('http://localhost:5000/prescriptions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ doctor_name: doctorName, instructions: instructions })
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to create entry.');
+        return res.json();
+      })
+      .then((newPresc) => {
+        setPrescriptionsList((prev) => [...prev, newPresc]);
+        setDoctorName(''); setInstructions('');
+        setFormMessage('Prescription written to PostgreSQL!');
+        setTimeout(() => setFormMessage(''), 3000);
+      })
+      .catch((err) => setFormMessage(`Error: ${err.message}`));
+  };
+
+  // Trigger inline text mutations state overrides
+  const startEdit = (presc) => {
+    setEditingId(presc.id);
+    setEditDoctor(presc.doctor_name || '');
+    setEditInstructions(presc.instructions || '');
+  };
+
+  // 2. UPDATE (PATCH)
+  const handleUpdatePrescription = (id) => {
+    fetch(`http://localhost:5000/prescriptions/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ doctor_name: editDoctor, instructions: editInstructions })
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Update failed.');
+        return res.json();
+      })
+      .then((updatedPresc) => {
+        setPrescriptionsList((prev) =>
+          prev.map((item) => (item.id === id ? updatedPresc : item))
+        );
+        setEditingId(null);
+      })
+      .catch((err) => alert(err.message));
+  };
+
+  // 3. DELETE (DELETE)
+  const handleDeletePrescription = (id) => {
+    if (!window.confirm('Delete this prescription note record?')) return;
+
+    fetch(`http://localhost:5000/prescriptions/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Delete failed.');
+        setPrescriptionsList((prev) => prev.filter((item) => item.id !== id));
+      })
+      .catch((err) => alert(err.message));
+  };
+
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Prescriptions</h1>
-      <p style={{ color: '#666' }}>Upload, review, and organize all formal authorization digital files assigned directly by your primary physicians.</p>
+    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+      <h1>Prescriptions Workspace (Full CRUD)</h1>
 
-      {/* 3. Conditional Layout States */}
-      {loading && <p>Loading your prescriptions...</p>}
-      {error && <p style={{ color: 'red' }}>Error: {error}. Make sure you are logged in.</p>}
+      {/* CREATE ENTRY BOX FORM CARD */}
+      <div style={{ background: '#f5f5f5', padding: '20px', borderRadius: '8px', marginBottom: '30px', border: '1px solid #ddd' }}>
+        <h3>📝 Log New Prescription</h3>
+        {formMessage && <p style={{ color: 'green', fontWeight: 'bold' }}>{formMessage}</p>}
+        <form onSubmit={handleAddPrescription} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <input type="text" placeholder="Dr. Name" value={doctorName} onChange={(e) => setDoctorName(e.target.value)} style={{ padding: '8px' }} />
+          <textarea placeholder="Instructions" value={instructions} onChange={(e) => setInstructions(e.target.value)} style={{ padding: '8px', minHeight: '60px' }} />
+          <button type="submit" style={{ background: '#004d40', color: 'white', border: 'none', padding: '10px', borderRadius: '4px', cursor: 'pointer' }}>Log Prescription</button>
+        </form>
+      </div>
 
-      {/* 4. Map Loop to Output Each Prescription Item */}
-      {!loading && !error && prescriptionsList.length === 0 && (
-        <p>No prescriptions found for this account layout profile.</p>
-      )}
+      {/* GRID DISPLAY FOR ALL LOGGED CARDS */}
+      <h3>📜 Active Database Files</h3>
+      {loading && <p>Loading tracks...</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
 
-      {!loading && !error && prescriptionsList.length > 0 && (
-        <div style={{ display: 'grid', gap: '15px', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', marginTop: '20px' }}>
-          {prescriptionsList.map((presc) => (
-            <div 
-              key={presc.id || presc.prescription_id} 
-              style={{
-                border: '1px solid #ccc',
-                borderRadius: '8px',
-                padding: '20px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                backgroundColor: '#fff'
-              }}
-            >
-              {/* Note: Change 'presc.doctor_name' or 'presc.details' to match your exact Flask Model columns */}
-              <h3 style={{ margin: '0 0 10px 0', color: '#004d40' }}>
-                Prescription #{presc.id || presc.prescription_id}
-              </h3>
-              {presc.doctor_name && <p style={{ margin: '5px 0' }}><strong>Doctor:</strong> {presc.doctor_name}</p>}
-              {presc.date_issued && <p style={{ margin: '5px 0' }}><strong>Date Issued:</strong> {presc.date_issued}</p>}
-              {presc.instructions && <p style={{ margin: '5px 0', color: '#555' }}><strong>Instructions:</strong> {presc.instructions}</p>}
-              
-              {/* If your prescription object contains a nested array of its assigned medications */}
-              {presc.medications && Array.isArray(presc.medications) && presc.medications.length > 0 && (
-                <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #eee' }}>
-                  <strong style={{ fontSize: '0.9em', color: '#666' }}>Linked Medications:</strong>
-                  <ul style={{ margin: '5px 0 0 0', paddingLeft: '20px', fontSize: '0.9em' }}>
-                    {presc.medications.map((med, idx) => (
-                      <li key={idx}>{med.name || med}</li>
-                    ))}
-                  </ul>
-                </div>
+      <div style={{ display: 'grid', gap: '15px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+        {prescriptionsList.map((presc) => (
+          <div key={presc.id} style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '15px', backgroundColor: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            {editingId === presc.id ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
+                <input type="text" value={editDoctor} onChange={(e) => setEditDoctor(e.target.value)} style={{ padding: '4px' }} />
+                <textarea value={editInstructions} onChange={(e) => setEditInstructions(e.target.value)} style={{ padding: '4px', minHeight: '60px' }} />
+              </div>
+            ) : (
+              <div style={{ marginBottom: '10px' }}>
+                <h4 style={{ margin: '0 0 5px 0', color: '#004d40' }}>Prescription #{presc.id}</h4>
+                <p style={{ margin: '3px 0' }}><strong>Doctor:</strong> {presc.doctor_name || 'Primary Care'}</p>
+                <p style={{ margin: '3px 0', fontSize: '0.9em', color: '#555' }}><strong>Notes:</strong> {presc.instructions}</p>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+              {editingId === presc.id ? (
+                <>
+                  <button onClick={() => handleUpdatePrescription(presc.id)} style={{ background: '#2e7d32', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85em' }}>Save</button>
+                  <button onClick={() => setEditingId(null)} style={{ background: '#757575', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85em' }}>Cancel</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => startEdit(presc)} style={{ background: '#0288d1', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85em' }}>Edit</button>
+                  <button onClick={() => handleDeletePrescription(presc.id)} style={{ background: '#c62828', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85em' }}>Delete</button>
+                </>
               )}
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 export default Prescriptions;
+

@@ -10,12 +10,12 @@ class Register(Resource):
 
     def post(self):
         data = request.get_json()
+        if not data:
+            return {"message": "Missing request payload"}, 400
 
         username = data.get("username")
         email = data.get("email")
         password = data.get("password")
-        
-        
         role_name = data.get("role", "user") 
 
         if not username or not email or not password:
@@ -25,10 +25,7 @@ class Register(Resource):
         if existing_user:
             return {"message": "Email already exists"}, 400
 
-    
         user_role = Role.query.filter(Role.name.ilike(role_name)).first()
-
-        
         if not user_role:
             user_role = Role.query.first()
             if not user_role:
@@ -36,24 +33,29 @@ class Register(Resource):
 
         hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
 
-        user = User(
-            username=username,
-            email=email,
-            password_hash=hashed_password,
-            role_id=user_role.id
-        )
+        # 🎯 SMART FALLBACK CHECK: Automatically map to the exact string attribute matching your model schema layout
+        user_kwargs = {
+            "username": username,
+            "email": email,
+            "role_id": user_role.id
+        }
+        
+        if hasattr(User, 'password_hash'):
+            user_kwargs['password_hash'] = hashed_password
+        else:
+            user_kwargs['password'] = hashed_password
+
+        user = User(**user_kwargs)
 
         try:
             db.session.add(user)
             db.session.commit()
 
-        
             token = create_access_token(
                 identity=str(user.id),
                 additional_claims={"role": user_role.name.lower()}
             )
 
-    
             return {
                 "token": token,
                 "user": {
@@ -73,21 +75,31 @@ class Login(Resource):
 
     def post(self):
         data = request.get_json()
+        if not data:
+            return {"message": "Missing request payload"}, 400
 
         email = data.get("email")
         password = data.get("password")
 
-        user = User.query.filter_by(email=email).first()
+        if not email or not password:
+            return {"message": "Email and password are required fields"}, 400
 
+        # Look up the user record safely
+        user = User.query.filter_by(email=email).first()
         if not user:
             return {"message": "Invalid email or password"}, 401
 
-        if not bcrypt.check_password_hash(user.password_hash, password):
+        # 🎯 SMART PASSWORD LOOKUP: Dynamically check the column name mapping to prevent 500 crashes
+        stored_hash = getattr(user, 'password_hash', None) or getattr(user, 'password', None)
+        
+        if not stored_hash or not bcrypt.check_password_hash(stored_hash, password):
             return {"message": "Invalid email or password"}, 401
+
+        user_role_name = user.role.name.lower() if user.role else "user"
 
         token = create_access_token(
             identity=str(user.id),
-            additional_claims={"role": user.role.name.lower()}
+            additional_claims={"role": user_role_name}
         )
 
         return {
@@ -96,6 +108,8 @@ class Login(Resource):
                 "id": user.id,
                 "username": user.username,
                 "email": user.email,
-                "role": user.role.name.lower() 
+                "role": user_role_name 
             }
         }, 200
+
+
