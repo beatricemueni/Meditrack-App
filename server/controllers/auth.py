@@ -33,7 +33,6 @@ class Register(Resource):
 
         hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
 
-        # 🎯 SMART FALLBACK CHECK: Automatically map to the exact string attribute matching your model schema layout
         user_kwargs = {
             "username": username,
             "email": email,
@@ -84,12 +83,12 @@ class Login(Resource):
         if not email or not password:
             return {"message": "Email and password are required fields"}, 400
 
-        # Look up the user record safely
+        # Look up the user record 
         user = User.query.filter_by(email=email).first()
         if not user:
             return {"message": "Invalid email or password"}, 401
 
-        # 🎯 SMART PASSWORD LOOKUP: Dynamically check the column name mapping to prevent 500 crashes
+    
         stored_hash = getattr(user, 'password_hash', None) or getattr(user, 'password', None)
         
         if not stored_hash or not bcrypt.check_password_hash(stored_hash, password):

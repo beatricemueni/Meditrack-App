@@ -1,14 +1,14 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState } from 'react';
 
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
-  // 1. MAKE SURE YOUR REGISTER FUNCTION LOOKS LIKE THIS
+  // Added async back correctly to the function parameters
   const register = async (userData) => {
     try {
-      const response = await fetch("http://localhost:5000/register", { // Match your Flask URL port
+      const response = await fetch("http://127.0.0", { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData)
@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch("http://localhost:5000/login", {
+      const response = await fetch("http://127.0.0", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
@@ -43,6 +43,7 @@ export function AuthProvider({ children }) {
       }
       return false;
     } catch (error) {
+      console.error("Login error:", error);
       return false;
     }
   };
@@ -53,7 +54,6 @@ export function AuthProvider({ children }) {
   };
 
   return (
-  
     <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
