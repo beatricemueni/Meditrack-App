@@ -15,21 +15,14 @@ def create_app():
     bcrypt.init_app(app)
     jwt.init_app(app)
     
-    ALLOWED_ORIGINS = [
-        "http://localhost:5173",
-        "http://localhost:5173/",
-        "https://meditrack-app-chi.vercel.app",
-        "https://meditrack-app-chi.vercel.app/"
-    ]
-    
+    # Using "*" allows all dynamic Vercel preview links to connect seamlessly
     cors.init_app(
         app, 
         resources={r"/*": {
-            "origins": ALLOWED_ORIGINS,
+            "origins": "*",
             "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"]
-        }}, 
-        supports_credentials=True
+        }}
     )
     
     ma.init_app(app)
