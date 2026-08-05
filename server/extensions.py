@@ -6,10 +6,21 @@ from flask_cors import CORS
 from flask_marshmallow import Marshmallow
 from flask_restful import Api
 
+# Database
 db = SQLAlchemy()
+
+# Migrations
 migrate = Migrate()
+
+# Authentication
 bcrypt = Bcrypt()
 jwt = JWTManager()
+
+# CORS
 cors = CORS()
+
+# Marshmallow
 ma = Marshmallow()
-api = Api()
+
+# Flask-RESTful API
+api = Api(prefix="")

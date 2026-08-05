@@ -25,10 +25,13 @@ function Register() {
     setError("");
 
     try {
-      // Execute registration context call
-      const success = await register(formData);
-      if (success) {
+      const result = await register(formData);
+      
+      // 🌟 FIXED: Accommodate the updated object structure
+      if (result === true) {
         navigate("/dashboard");
+      } else if (result && result.message) {
+        setError(result.message); // Displays real backend strings like "Email already exists"
       } else {
         setError("Registration process encountered an error.");
       }
@@ -36,6 +39,7 @@ function Register() {
       setError(err.message || "An error occurred during submission.");
     }
   };
+
 
   return (
     <div className="main-content" style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
@@ -55,7 +59,6 @@ function Register() {
         )}
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          {/* Username block */}
           <div>
             <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>Username</label>
             <div style={{ position: "relative" }}>
@@ -64,7 +67,6 @@ function Register() {
             </div>
           </div>
 
-          {/* Email input block */}
           <div>
             <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>Email Address</label>
             <div style={{ position: "relative" }}>
@@ -73,7 +75,6 @@ function Register() {
             </div>
           </div>
 
-          {/* Password element */}
           <div>
             <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>Password</label>
             <div style={{ position: "relative" }}>
@@ -82,7 +83,6 @@ function Register() {
             </div>
           </div>
 
-          {/* Role selector dropdown field */}
           <div>
             <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>Account Type</label>
             <div style={{ position: "relative" }}>
@@ -112,3 +112,4 @@ function Register() {
 }
 
 export default Register;
+

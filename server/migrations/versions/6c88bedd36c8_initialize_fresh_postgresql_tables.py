@@ -1,8 +1,8 @@
-"""create initial meditrack tables
+"""Initialize fresh postgresql tables
 
-Revision ID: 11aec75f7c0c
+Revision ID: 6c88bedd36c8
 Revises: 
-Create Date: 2026-08-02 15:20:47.043315
+Create Date: 2026-08-05 08:14:02.544343
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '11aec75f7c0c'
+revision = '6c88bedd36c8'
 down_revision = None
 branch_labels = None
 depends_on = None

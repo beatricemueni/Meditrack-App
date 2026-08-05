@@ -23,10 +23,14 @@ function Login() {
     setError("");
 
     try {
-      // Execute authentications loops
-      const success = await login(formData.email, formData.password);
-      if (success) {
+      // Execute authentication loop
+      const result = await login(formData.email, formData.password);
+      
+      // 🌟 FIXED: Handle object response with .message from AuthContext
+      if (result === true) {
         navigate("/dashboard");
+      } else if (result && typeof result === "object" && result.message) {
+        setError(result.message); // Displays the precise server error string
       } else {
         setError("Invalid email address or secure password combo.");
       }
@@ -89,4 +93,3 @@ function Login() {
 }
 
 export default Login;
-

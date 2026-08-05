@@ -1,50 +1,42 @@
 import React, { createContext, useState } from 'react';
+import { apiFetch } from '../api/api'; 
 
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
-  // Added async back correctly to the function parameters
   const register = async (userData) => {
     try {
-      const response = await fetch("http://127.0.0", { 
+      const data = await apiFetch("/register", { 
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData)
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem("token", data.token);
-        setUser(data.user);
-        return true;
-      }
-      return false;
+      localStorage.setItem("token", data.token);
+      setUser(data.user); 
+      return true;
     } catch (error) {
-      console.error("Registration error:", error);
-      return false;
+      console.error("Registration error:", error.message);
+      // 🌟 FIXED: Bubble up the custom message text so Register.jsx can render it
+      return { success: false, message: error.message || "Registration failed." };
     }
   };
 
   const login = async (email, password) => {
     try {
-      const response = await fetch("http://127.0.0", {
+      const data = await apiFetch("/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem("token", data.token);
-        setUser(data.user);
-        return true;
-      }
-      return false;
+      localStorage.setItem("token", data.token);
+      setUser(data.user); 
+      return true;
     } catch (error) {
-      console.error("Login error:", error);
-      return false;
+      console.error("Login error:", error.message);
+      // 🌟 FIXED: Bubble up the custom message text so Login.jsx can render it
+      return { success: false, message: error.message || "Login failed." };
     }
   };
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../api/api'; // Integrates your corrected central helper
 
 function Medications() {
   const [medicationsList, setMedicationsList] = useState([]);
@@ -17,19 +18,9 @@ function Medications() {
   const [editDosage, setEditDosage] = useState('');
   const [editFrequency, setEditFrequency] = useState('');
 
-  // Fetch items
+  // Fetch items using stabilized apiFetch routing helper
   useEffect(() => {
-    fetch('http://localhost:5000/medications', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`Status: ${res.status}`);
-        return res.json();
-      })
+    apiFetch('/medications', { method: 'GET' })
       .then((data) => {
         if (data && Array.isArray(data.data)) setMedicationsList(data.data);
         else if (Array.isArray(data)) setMedicationsList(data);
@@ -49,18 +40,10 @@ function Medications() {
       return;
     }
 
-    fetch('http://localhost:5000/medications', {
+    apiFetch('/medications', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
       body: JSON.stringify({ name, dosage, frequency })
     })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to create.');
-        return res.json();
-      })
       .then((newMed) => {
         setMedicationsList((prev) => [...prev, newMed]);
         setName(''); setDosage(''); setFrequency('');
@@ -80,18 +63,10 @@ function Medications() {
 
   // 2. UPDATE (PATCH)
   const handleUpdateMedication = (id) => {
-    fetch(`http://localhost:5000/medications/${id}`, {
+    apiFetch(`/medications/${id}`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
       body: JSON.stringify({ name: editName, dosage: editDosage, frequency: editFrequency })
     })
-      .then((res) => {
-        if (!res.ok) throw new Error('Update failed.');
-        return res.json();
-      })
       .then((updatedMed) => {
         setMedicationsList((prev) =>
           prev.map((item) => (item.id === id ? updatedMed : item))
@@ -105,75 +80,73 @@ function Medications() {
   const handleDeleteMedication = (id) => {
     if (!window.confirm('Are you sure you want to delete this medication record?')) return;
 
-    fetch(`http://localhost:5000/medications/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Delete failed.');
-        // Optimistically remove from state grid map loop
+    apiFetch(`/medications/${id}`, { method: 'DELETE' })
+      .then(() => {
         setMedicationsList((prev) => prev.filter((item) => item.id !== id));
       })
       .catch((err) => alert(err.message));
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-      <h1>Medications Hub (Full CRUD)</h1>
-      
-      {/* ADD NEW MEDICINE INPUT PANEL */}
-      <div style={{ background: '#f5f5f5', padding: '20px', borderRadius: '8px', marginBottom: '30px', border: '1px solid #ddd' }}>
-        <h3>📥 Add New Medication</h3>
-        {formMessage && <p style={{ color: 'green', fontWeight: 'bold' }}>{formMessage}</p>}
-        <form onSubmit={handleAddMedication} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} style={{ padding: '8px' }} />
-          <input type="text" placeholder="Dosage" value={dosage} onChange={(e) => setDosage(e.target.value)} style={{ padding: '8px' }} />
-          <input type="text" placeholder="Frequency" value={frequency} onChange={(e) => setFrequency(e.target.value)} style={{ padding: '8px' }} />
-          <button type="submit" style={{ background: '#004d40', color: 'white', border: 'none', padding: '10px', borderRadius: '4px', cursor: 'pointer' }}>Save Medication</button>
-        </form>
-      </div>
+    <div className="main-content-wrapper" style={{ width: '100%', display: 'flex', justifyContent: 'center', boxSizing: 'border-box' }}>
+      <div className="main-content" style={{ maxWidth: '900px', width: '100%', padding: '20px' }}>
+        
+        <h1>Medications Hub (Full CRUD)</h1>
+        
+        <div style={{ background: '#ffffff', padding: '24px', borderRadius: '12px', marginBottom: '30px', border: '1px solid var(--border)' }}>
+          <h3 style={{ marginBottom: '14px', color: 'var(--text)' }}>📥 Add New Medication</h3>
+          {formMessage && <p style={{ color: 'green', fontWeight: 'bold', marginBottom: '10px' }}>{formMessage}</p>}
+          <form onSubmit={handleAddMedication} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ccc', outline: 'none' }} />
+            <input type="text" placeholder="Dosage" value={dosage} onChange={(e) => setDosage(e.target.value)} style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ccc', outline: 'none' }} />
+            <input type="text" placeholder="Frequency" value={frequency} onChange={(e) => setFrequency(e.target.value)} style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ccc', outline: 'none' }} />
+            <button type="submit" className="btn-primary" style={{ padding: '12px', borderRadius: '8px', cursor: 'pointer', border: 'none' }}>Save Medication</button>
+          </form>
+        </div>
 
-      {/* ITEMS OUTPUT ITERATION ROW VIEW CONTAINER */}
-      <h3>📋 Current Inventory</h3>
-      {loading && <p>Loading lists...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      
-      <ul style={{ listStyleType: 'none', padding: 0 }}>
-        {medicationsList.map((med) => (
-          <li key={med.id} style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '15px', marginBottom: '10px', backgroundColor: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            {editingId === med.id ? (
-              <div style={{ display: 'flex', gap: '8px', width: '70%' }}>
-                <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ padding: '4px', width: '30%' }} />
-                <input type="text" value={editDosage} onChange={(e) => setEditDosage(e.target.value)} style={{ padding: '4px', width: '30%' }} />
-                <input type="text" value={editFrequency} onChange={(e) => setEditFrequency(e.target.value)} style={{ padding: '4px', width: '30%' }} />
-              </div>
-            ) : (
-              <div>
-                <strong style={{ fontSize: '1.1em', color: '#004d40' }}>{med.name}</strong> — {med.dosage} ({med.frequency})
-              </div>
-            )}
-
-            <div style={{ display: 'flex', gap: '10px' }}>
+        {/* ITEMS OUTPUT ITERATION ROW VIEW CONTAINER */}
+        <h3 style={{ marginBottom: '16px', color: 'var(--text)' }}>📋 Current Inventory</h3>
+        {loading && <p>Loading lists...</p>}
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        
+        <ul style={{ listStyleType: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {medicationsList.map((med) => (
+            <li key={med.id} style={{ border: '1px solid var(--border)', borderRadius: '12px', padding: '16px 20px', backgroundColor: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow-sm)' }}>
+              
               {editingId === med.id ? (
-                <>
-                  <button onClick={() => handleUpdateMedication(med.id)} style={{ background: '#2e7d32', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>Save</button>
-                  <button onClick={() => setEditingId(null)} style={{ background: '#757575', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>Cancel</button>
-                </>
+                <div style={{ display: 'flex', gap: '8px', width: '70%' }}>
+                  <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ padding: '8px', width: '33%', borderRadius: '6px', border: '1px solid #ccc' }} />
+                  <input type="text" value={editDosage} onChange={(e) => setEditDosage(e.target.value)} style={{ padding: '8px', width: '33%', borderRadius: '6px', border: '1px solid #ccc' }} />
+                  <input type="text" value={editFrequency} onChange={(e) => setEditFrequency(e.target.value)} style={{ padding: '8px', width: '33%', borderRadius: '6px', border: '1px solid #ccc' }} />
+                </div>
               ) : (
-                <>
-                  <button onClick={() => startEdit(med)} style={{ background: '#0288d1', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>Edit</button>
-                  <button onClick={() => handleDeleteMedication(med.id)} style={{ background: '#c62828', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>Delete</button>
-                </>
+                <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <strong style={{ fontSize: '1.1em', color: 'var(--primary)' }}>{med.name}</strong> — {med.dosage} ({med.frequency})
+                </div>
               )}
-            </div>
-          </li>
-        ))}
-      </ul>
+
+              {/* Action Buttons Row*/}
+              <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
+                {editingId === med.id ? (
+                  <>
+                    <button onClick={() => handleUpdateMedication(med.id)} style={{ background: '#2e7d32', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}>Save</button>
+                    <button onClick={() => setEditingId(null)} style={{ background: '#757575', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}>Cancel</button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => startEdit(med)} style={{ background: '#0288d1', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}>Edit</button>
+                    <button onClick={() => handleDeleteMedication(med.id)} style={{ background: '#c62828', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}>Delete</button>
+                  </>
+                )}
+              </div>
+
+            </li>
+          ))}
+        </ul>
+
+      </div>
     </div>
   );
 }
 
 export default Medications;
-

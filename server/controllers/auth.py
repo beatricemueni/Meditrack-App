@@ -83,32 +83,35 @@ class Login(Resource):
         if not email or not password:
             return {"message": "Email and password are required fields"}, 400
 
-        # Look up the user record 
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            return {"message": "Invalid email or password"}, 401
+        try:
+            # Look up the user record
+            user = User.query.filter_by(email=email).first()
+            if not user:
+                return {"message": "Invalid email or password"}, 401
 
-    
-        stored_hash = getattr(user, 'password_hash', None) or getattr(user, 'password', None)
-        
-        if not stored_hash or not bcrypt.check_password_hash(stored_hash, password):
-            return {"message": "Invalid email or password"}, 401
+            stored_hash = getattr(user, 'password_hash', None) or getattr(user, 'password', None)
 
-        user_role_name = user.role.name.lower() if user.role else "user"
+            if not stored_hash or not bcrypt.check_password_hash(stored_hash, password):
+                return {"message": "Invalid email or password"}, 401
 
-        token = create_access_token(
-            identity=str(user.id),
-            additional_claims={"role": user_role_name}
-        )
+            user_role_name = user.role.name.lower() if user.role else "user"
 
-        return {
-            "token": token, 
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "role": user_role_name 
-            }
-        }, 200
+            token = create_access_token(
+                identity=str(user.id),
+                additional_claims={"role": user_role_name}
+            )
+
+            return {
+                "token": token,
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "role": user_role_name
+                }
+            }, 200
+
+        except Exception as e:
+            return {"message": f"Internal login error: {str(e)}"}, 500
 
 

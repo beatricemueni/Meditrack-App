@@ -1,36 +1,27 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../api/api';
 
 function Prescriptions() {
   const [prescriptionsList, setPrescriptionsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Form creation input states
   const [doctorName, setDoctorName] = useState('');
   const [instructions, setInstructions] = useState('');
   const [formMessage, setFormMessage] = useState('');
 
-  // Inline edit monitor variables
   const [editingId, setEditingId] = useState(null);
   const [editDoctor, setEditDoctor] = useState('');
   const [editInstructions, setEditInstructions] = useState('');
 
-  // Fetch items
   useEffect(() => {
-    fetch('http://localhost:5000/prescriptions', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`Status: ${res.status}`);
-        return res.json();
-      })
+    apiFetch('/prescriptions', { method: 'GET' })
       .then((data) => {
-        if (data && Array.isArray(data.prescriptions)) setPrescriptionsList(data.prescriptions);
-        else if (Array.isArray(data)) setPrescriptionsList(data);
+        if (data && Array.isArray(data.prescriptions)) {
+          setPrescriptionsList(data.prescriptions);
+        } else if (Array.isArray(data)) {
+          setPrescriptionsList(data);
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -39,7 +30,6 @@ function Prescriptions() {
       });
   }, []);
 
-  // 1. CREATE (POST)
   const handleAddPrescription = (e) => {
     e.preventDefault();
     if (!doctorName || !instructions) {
@@ -47,48 +37,31 @@ function Prescriptions() {
       return;
     }
 
-    fetch('http://localhost:5000/prescriptions', {
+    apiFetch('/prescriptions', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
       body: JSON.stringify({ doctor_name: doctorName, instructions: instructions })
     })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to create entry.');
-        return res.json();
-      })
       .then((newPresc) => {
         setPrescriptionsList((prev) => [...prev, newPresc]);
-        setDoctorName(''); setInstructions('');
+        setDoctorName(''); 
+        setInstructions('');
         setFormMessage('Prescription written to PostgreSQL!');
         setTimeout(() => setFormMessage(''), 3000);
       })
       .catch((err) => setFormMessage(`Error: ${err.message}`));
   };
 
-  // Trigger inline text mutations state overrides
   const startEdit = (presc) => {
     setEditingId(presc.id);
     setEditDoctor(presc.doctor_name || '');
     setEditInstructions(presc.instructions || '');
   };
 
-  // 2. UPDATE (PATCH)
   const handleUpdatePrescription = (id) => {
-    fetch(`http://localhost:5000/prescriptions/${id}`, {
+    apiFetch(`/prescriptions/${id}`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
       body: JSON.stringify({ doctor_name: editDoctor, instructions: editInstructions })
     })
-      .then((res) => {
-        if (!res.ok) throw new Error('Update failed.');
-        return res.json();
-      })
       .then((updatedPresc) => {
         setPrescriptionsList((prev) =>
           prev.map((item) => (item.id === id ? updatedPresc : item))
@@ -98,18 +71,11 @@ function Prescriptions() {
       .catch((err) => alert(err.message));
   };
 
-  // 3. DELETE (DELETE)
   const handleDeletePrescription = (id) => {
     if (!window.confirm('Delete this prescription note record?')) return;
 
-    fetch(`http://localhost:5000/prescriptions/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Delete failed.');
+    apiFetch(`/prescriptions/${id}`, { method: 'DELETE' })
+      .then(() => {
         setPrescriptionsList((prev) => prev.filter((item) => item.id !== id));
       })
       .catch((err) => alert(err.message));
@@ -119,7 +85,6 @@ function Prescriptions() {
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
       <h1>Prescriptions Workspace (Full CRUD)</h1>
 
-      {/* CREATE ENTRY BOX FORM CARD */}
       <div style={{ background: '#f5f5f5', padding: '20px', borderRadius: '8px', marginBottom: '30px', border: '1px solid #ddd' }}>
         <h3>📝 Log New Prescription</h3>
         {formMessage && <p style={{ color: 'green', fontWeight: 'bold' }}>{formMessage}</p>}
@@ -130,10 +95,9 @@ function Prescriptions() {
         </form>
       </div>
 
-      {/* GRID DISPLAY FOR ALL LOGGED CARDS */}
       <h3>📜 Active Database Files</h3>
       {loading && <p>Loading tracks...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p style={{ color: 'red' }}>{error}. Make sure you are logged in.</p>}
 
       <div style={{ display: 'grid', gap: '15px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
         {prescriptionsList.map((presc) => (
@@ -172,4 +136,3 @@ function Prescriptions() {
 }
 
 export default Prescriptions;
-
